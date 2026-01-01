@@ -19,20 +19,36 @@ const SimulationConfigurator = ({ socketId, setPosition }) => {
 
   const [selectedTemplate, setSelectedTemplate] = useState("");
 
+  const handleTemplateChange = (e) => {
+    const { value } = e.target;
+    setSelectedTemplate(value);
+    if (!value) {
+      return;
+    }
+
+    const template = simulationTemplates[value];
+    if (!template) {
+      return;
+    }
+
+    setSimulationParams((prev) => ({
+      ...prev,
+      ...template.params,
+      user_id: socketId,
+      space_objects: template.params.space_objects.map((obj) => ({
+        ...obj,
+        position: { ...obj.position },
+        velocity: { ...obj.velocity },
+      })),
+    }));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setSimulationParams((prev) => ({
       ...prev,
       [name]: isNaN(Number(value)) ? value : parseFloat(value),
     }));
-  };
-
-  const handleSpaceObjectChange = (index, field, value) => {
-    setSimulationParams((prev) => {
-      const updatedObjects = [...prev.space_objects];
-      updatedObjects[index][field] = isNaN(Number(value)) ? value : parseFloat(value);
-      return { ...prev, space_objects: updatedObjects };
-    });
   };
 
   const addSpaceObject = () => {
