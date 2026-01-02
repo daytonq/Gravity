@@ -7,6 +7,9 @@ import CoordinatesDisplay from "./components/CoordinatesDisplay.jsx";
 import { socket } from "./socket.js";
 import "./App.css";
 
+type Position = { x: number; y: number };
+type DragState = { start: Position; offset: Position; active: boolean };
+
 const keyMap = new Map([
   ["w", "down"],
   ["s", "up"],
@@ -16,12 +19,12 @@ const keyMap = new Map([
 
 const App = () => {
   const [canvasSize, setCanvasSize] = useState(calculateCanvasSize);
-  const [positions, setPositions] = useState([]);
-  const [socketId, setSocketId] = useState();
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [socketId, setSocketId] = useState<string | undefined>();
   const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   
-  const dragState = useRef({
+  const dragState = useRef<DragState>({
     start: { x: 0, y: 0 },
     offset: { x: 0, y: 0 },
     active: false
@@ -46,7 +49,7 @@ const App = () => {
   }, [updateCanvasSize]);
 
   useEffect(() => {
-    const handleKeyEvent = (event) => {
+    const handleKeyEvent = (event: KeyboardEvent) => {
       const direction = keyMap.get(event.key.toLowerCase());
       if (direction) {
         socket.emit("button_press", {
@@ -56,11 +59,11 @@ const App = () => {
       }
     };
 
-    const handleSocketUpdate = (data) => {
+    const handleSocketUpdate = (data: string) => {
       try {
         const parsed = JSON.parse(data);
         setPositions(prev => {
-          const newPositions = parsed.map(obj => Object.values(obj)[0]);
+          const newPositions = parsed.map((obj: Record<string, Position>) => Object.values(obj)[0]);
           if (prev.length !== newPositions.length || 
               prev.some((p, i) => p.x !== newPositions[i].x || p.y !== newPositions[i].y)) {
             return newPositions;
@@ -89,8 +92,7 @@ const App = () => {
     };
   }, []);
 
-  const handleWheel = useCallback((event) => {
-  
+  const handleWheel = useCallback((event: React.WheelEvent<HTMLCanvasElement>) => {
     const stage = event.currentTarget;
     const rect = stage.getBoundingClientRect();
     
@@ -112,8 +114,9 @@ const App = () => {
     setPosition(newPosition);
   }, [scale, position, canvasSize]);
   
-  const handleDragStart = useCallback((event) => {
-    if (event.target.localName !== "canvas") return;
+  const handleDragStart = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.localName !== "canvas") return;
     dragState.current = {
       start: { x: event.clientX, y: event.clientY },
       offset: { x: position.x, y: position.y },
@@ -121,7 +124,7 @@ const App = () => {
     };
   }, [position]);
 
-  const handleDragMove = useCallback((event) => {
+  const handleDragMove = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!dragState.current.active) return;
     
     const deltaX = (event.clientX - dragState.current.start.x) / scale;

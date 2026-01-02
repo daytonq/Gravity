@@ -87,15 +87,18 @@ const SimulationConfigurator = ({ socketId, setPosition }) => {
 
   const handleLaunchSimulation = async (e) => {
     e.preventDefault();
-    simulationParams.elasticity_coefficient /= 100;
-    simulationParams.user_id = socketId;
-    console.log(simulationParams);
+    const payload = {
+      ...simulationParams,
+      user_id: socketId,
+      elasticity_coefficient: simulationParams.elasticity_coefficient / 100,
+    };
+    console.log(payload);
     setPosition({ x: 0, y: 0 });
     try {
       const response = await fetch('http://localhost:5000/launch_simulation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(simulationParams)
+        body: JSON.stringify(payload)
       });
       if (!response.ok) { throw new Error("Not ok") }
       const result = await response.json();

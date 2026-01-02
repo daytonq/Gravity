@@ -1,4 +1,3 @@
-import React from 'react';
 import { Graphics } from '@pixi/react';
 
 function SpaceObject({ pos} ) {
